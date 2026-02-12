@@ -1,4 +1,4 @@
-# claude-plugins
+# Code Plugins
 
 Claude Code plugins by Marco Machado.
 
@@ -12,10 +12,10 @@ Claude Code plugins by Marco Machado.
 
 ```bash
 # Add the marketplace (one-time)
-/plugin marketplace add marco-machado/claude-plugins
+/plugin marketplace add marco-machado/code-plugins
 
 # Install a plugin
-/plugin install issue-workflow@claude-plugins
+/plugin install issue-workflow@code-plugins
 ```
 
 ## License
