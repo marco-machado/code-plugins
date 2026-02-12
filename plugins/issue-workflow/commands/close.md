@@ -1,5 +1,5 @@
 ---
-description: Close a GitHub issue with proper workflow checks (docs-sync, checklist completion, close reason)
+description: Close a GitHub issue with proper workflow checks (checklist completion, close reason)
 argument-hint: "Issue number (e.g., 42)"
 allowed-tools: ["Bash", "AskUserQuestion"]
 ---
@@ -30,16 +30,7 @@ If the issue is already closed, tell the user and stop.
 
 Run these checks before closing:
 
-#### 2.1 Documentation Sync
-
-Check if the issue has the `docs-sync-required` label.
-
-If yes, warn the user:
-> This issue has the `docs-sync-required` label. Before closing, ensure the referenced documentation has been updated. The issue is not complete until docs are synced.
-
-Ask if documentation has been updated. If not, ask if they want to proceed anyway or handle docs first.
-
-#### 2.2 Checklist Completion
+#### 2.1 Checklist Completion
 
 Parse the issue body for checklist items (`- [ ]` and `- [x]`).
 
@@ -52,7 +43,7 @@ Ask if they want to:
 - Close anyway (items were deferred or no longer relevant)
 - Go back and complete the items first
 
-#### 2.3 Blocked Label
+#### 2.2 Blocked Label
 
 Check if the issue has the `blocked` label. If yes, note that the issue was blocked and ask if the blocker was resolved.
 
@@ -95,5 +86,5 @@ gh issue edit {NUMBER} --remove-label "blocked"
 Output:
 - Confirmation that issue was closed
 - The close reason
-- Any warnings that were acknowledged (unchecked items, docs not synced)
+- Any warnings that were acknowledged (e.g. unchecked items)
 - Reminder: closed issues are searchable — if it becomes relevant again, reopen it

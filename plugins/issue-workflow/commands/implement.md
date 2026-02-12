@@ -32,7 +32,7 @@ gh api repos/{OWNER}/{REPO}/issues/{NUMBER}/comments --jq '.[].body'
 **Output summary:**
 - Issue number and title
 - Current state (open/closed)
-- Labels (especially `blocked`, `docs-sync-required`)
+- Labels (especially `blocked`)
 
 If the issue is closed, warn the user and ask if they want to proceed anyway.
 
@@ -52,7 +52,7 @@ Parse the issue body following the standard structure:
 1. **Scope boundaries** — What's explicitly in/out of scope
 2. **Unknowns** — Areas marked "TBD" or lacking detail
 3. **Dependencies** — External factors or blocked items
-4. **Documentation flags** — If `docs-sync-required` label exists, note which docs need updating
+
 
 ### 3. Codebase Analysis
 
@@ -139,9 +139,6 @@ Structure the plan based on what the project actually uses. Discover layers from
 ### Testing Strategy
 - [What to test and how, based on project's test setup]
 - [Edge cases from acceptance criteria]
-
-### Documentation Updates
-[If `docs-sync-required` label exists, list which docs need updating]
 
 ### Acceptance Criteria Verification
 [Copy from issue with notes on how each will be verified]

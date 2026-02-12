@@ -65,12 +65,11 @@ Every issue follows this body format:
 
 ## Labels
 
-Only 4 labels. No more.
+Only 3 labels. No more.
 
 | Label | Purpose |
 |-------|---------|
 | `blocked` | Can't proceed, waiting on something |
-| `docs-sync-required` | Docs need updating when resolved |
 | `stale` | Auto-applied by zombie detection |
 | `pinned` | Exempt from stale detection |
 
@@ -95,7 +94,6 @@ Two methods:
 2. **Manual:** `gh issue close {N} --comment "reason" --reason completed`
 
 Before closing, check:
-- If `docs-sync-required` label exists → update the docs first
 - All checklist items completed or explicitly deferred
 
 ## Zombie Issue Management
@@ -114,17 +112,10 @@ Issues with `blocked` or `pinned` labels are exempt.
 ## Anti-Patterns to Avoid
 
 - **Issue inflation** — creating issues "just in case" (close if untouched for 3 months)
-- **Label obsession** — if you have more than 4 labels, delete the extras
+- **Label obsession** — if you have more than 3 labels, delete the extras
 - **Roadmap duplication** — maintaining status in both roadmap doc AND issues
 - **Future hoarding** — creating issues for work months away (put it in the roadmap doc instead)
 - **Zombie tolerance** — letting old issues sit open indefinitely
-
-## Documentation-Sourced Issues
-
-When creating an issue from a documentation gap:
-1. Reference the source document and specific section
-2. Add `docs-sync-required` label
-3. When resolving, update the documentation as part of the PR
 
 ## When NOT to Create Issues
 
@@ -143,6 +134,6 @@ This plugin provides commands for the full issue lifecycle:
 | `/issue-workflow:create` | Create a well-structured issue with proper type and body |
 | `/issue-workflow:implement` | Fetch issue, analyze codebase, create branch, plan implementation |
 | `/issue-workflow:triage` | Review open issues, find stale/zombie/blocked, suggest actions |
-| `/issue-workflow:close` | Close issue with workflow checks (docs-sync, checklist) |
+| `/issue-workflow:close` | Close issue with workflow checks (checklist completion) |
 
 The **issue-triage** agent can also be triggered proactively to analyze backlog health.

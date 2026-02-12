@@ -28,7 +28,6 @@ Check for these four labels:
 | Label | Description | Color |
 |-------|-------------|-------|
 | `blocked` | Can't proceed, waiting on something | `d73a4a` |
-| `docs-sync-required` | Docs need updating when resolved | `0075ca` |
 | `stale` | No recent activity (auto-managed) | `ededed` |
 | `pinned` | Exempt from stale detection | `006b75` |
 
@@ -36,12 +35,12 @@ Check for these four labels:
 gh label list --json name,description,color
 ```
 
-Mark as PASS if all 4 exist, WARN if some missing, FAIL if none exist.
+Mark as PASS if all 3 exist, WARN if some missing, FAIL if none exist.
 
 #### 2.2 Excess Labels
 
 Flag labels that duplicate issue type functionality or add no value for solo/small-team development:
-- `bug`, `enhancement`, `help wanted`, `good first issue`, `question`, `wontfix`, `duplicate`, `invalid`
+- `bug`, `enhancement`, `help wanted`, `good first issue`, `question`, `wontfix`, `duplicate`, `invalid`, `docs-sync-required`
 - Any `priority-*` labels
 
 These are excess because issue types (Bug/Feature/Task) handle categorization, and priority labels add overhead without value for solo developers.
@@ -68,7 +67,6 @@ Check for these files in `.github/ISSUE_TEMPLATE/`:
 - `bug.yml`
 - `feature.yml`
 - `task.yml`
-- `documentation-gap.yml`
 - `config.yml`
 
 Use Glob to check the local filesystem. Mark as PASS if all exist, WARN if some missing, FAIL if directory doesn't exist.
@@ -103,7 +101,6 @@ For each non-passing check, offer to fix it. Use AskUserQuestion to confirm befo
 **Labels — create missing ones:**
 ```bash
 gh label create "blocked" --description "Can't proceed, waiting on something" --color "d73a4a"
-gh label create "docs-sync-required" --description "Docs need updating when resolved" --color "0075ca"
 gh label create "stale" --description "No recent activity (auto-managed)" --color "ededed"
 gh label create "pinned" --description "Exempt from stale detection" --color "006b75"
 ```

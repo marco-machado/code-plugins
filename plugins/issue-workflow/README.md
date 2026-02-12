@@ -8,7 +8,7 @@ Issues exist to track work, not to create work. This plugin codifies a lightweig
 
 - **Structured issues** with Problem/Approach/Acceptance Criteria/Tasks format
 - **Three issue types** (Task, Bug, Feature) instead of label sprawl
-- **Four labels only** (`blocked`, `docs-sync-required`, `stale`, `pinned`)
+- **Three labels only** (`blocked`, `stale`, `pinned`)
 - **`issue/{N}-description` branch naming** for traceability
 - **Zombie detection** via automated stale workflow
 - **Right-sized issues** with checklists, not atomic sub-issues
@@ -21,7 +21,7 @@ Issues exist to track work, not to create work. This plugin codifies a lightweig
 | `/issue-workflow:create` | Create a well-structured issue with proper type and body format |
 | `/issue-workflow:implement` | Fetch an issue, analyze the codebase, create a branch, and generate an implementation plan |
 | `/issue-workflow:triage` | Review open issues — find stale/zombie/blocked items and suggest actions |
-| `/issue-workflow:close` | Close an issue with workflow checks (docs-sync, checklist completion) |
+| `/issue-workflow:close` | Close an issue with workflow checks (checklist completion) |
 
 ## Skill
 
