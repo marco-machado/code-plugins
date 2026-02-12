@@ -1,0 +1,27 @@
+{
+  "name": "claude-plugins",
+  "owner": {
+    "name": "Marco Machado",
+    "email": "marco.machado@gmail.com"
+  },
+  "metadata": {
+    "description": "Personal Claude Code plugins by Marco Machado",
+    "version": "1.0.0",
+    "pluginRoot": "./plugins"
+  },
+  "plugins": [
+    {
+      "name": "issue-workflow",
+      "source": "issue-workflow",
+      "description": "Opinionated GitHub Issues lifecycle management — create, implement, triage, close",
+      "version": "0.1.0",
+      "author": {
+        "name": "Marco Machado",
+        "email": "marco.machado@gmail.com"
+      },
+      "license": "MIT",
+      "keywords": ["github", "issues", "workflow", "triage", "branching"],
+      "category": "development"
+    }
+  ]
+}

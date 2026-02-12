@@ -1,0 +1,9 @@
+{
+  "name": "issue-workflow",
+  "version": "0.1.0",
+  "description": "Opinionated GitHub Issues workflow plugin — full lifecycle management with structured issue creation, implementation planning, triage, and repo setup.",
+  "author": {
+    "name": "Marco Machado",
+    "email": "marco.machado@gmail.com"
+  }
+}
