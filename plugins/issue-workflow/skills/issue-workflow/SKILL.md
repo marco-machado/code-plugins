@@ -27,6 +27,8 @@ GitHub Issue Types classify work at the organization level:
 
 Types are set at issue creation via the GitHub API (the `create` command handles this automatically).
 
+**Personal repos:** Native Issue Types are an org-only GitHub feature. On personal repos, the workflow uses `type:task`, `type:bug`, and `type:feature` labels as a fallback. The `/setup` command detects this automatically and creates the labels.
+
 ## Issue Sizing
 
 Issues represent a logical chunk of work, not atomic tasks. Group related work with checklists:
@@ -65,7 +67,7 @@ Every issue follows this body format:
 
 ## Labels
 
-Only 3 labels. No more.
+Three workflow labels — required on all repos:
 
 | Label | Purpose |
 |-------|---------|
@@ -73,7 +75,9 @@ Only 3 labels. No more.
 | `stale` | Auto-applied by zombie detection |
 | `pinned` | Exempt from stale detection |
 
-Do NOT use labels for categorization (that's what issue types are for), priority (you already know what's urgent), or assignment (you're solo).
+**Personal repos** also use three type labels (`type:task`, `type:bug`, `type:feature`) since native Issue Types are unavailable.
+
+Do NOT use labels for categorization (that's what issue types are for on org repos), priority (you already know what's urgent), or assignment (you're solo).
 
 ## Branch Naming
 
@@ -112,7 +116,7 @@ Issues with `blocked` or `pinned` labels are exempt.
 ## Anti-Patterns to Avoid
 
 - **Issue inflation** — creating issues "just in case" (close if untouched for 3 months)
-- **Label obsession** — if you have more than 3 labels, delete the extras
+- **Label obsession** — if you have more than 3 workflow labels (6 on personal repos counting type labels), delete the extras
 - **Roadmap duplication** — maintaining status in both roadmap doc AND issues
 - **Future hoarding** — creating issues for work months away (put it in the roadmap doc instead)
 - **Zombie tolerance** — letting old issues sit open indefinitely

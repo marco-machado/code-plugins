@@ -41,7 +41,7 @@ All plugin components are **plain markdown files** with YAML frontmatter — no 
 ## Key Conventions
 
 - Commands use `$ARGUMENTS` placeholder for user input and `${CLAUDE_PLUGIN_ROOT}` to reference plugin-bundled files.
-- The workflow enforces exactly **3 labels** (`blocked`, `stale`, `pinned`) and **3 issue types** (Task, Bug, Feature).
+- The workflow enforces **3 workflow labels** (`blocked`, `stale`, `pinned`) and **3 issue types** (Task, Bug, Feature) — on personal repos, types use `type:*` label fallback since native Issue Types are org-only.
 - Branch naming: `issue/{NUMBER}-{short-description}`.
 - Issue body structure: Problem → Approach → Acceptance Criteria → Tasks → Notes.
 - All GitHub API interaction uses the `gh` CLI (not raw REST calls).

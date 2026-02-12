@@ -1,7 +1,7 @@
 ---
 description: Create a GitHub issue following the issue workflow (proper type, structured body, area-prefixed title)
 argument-hint: Description of the issue to create
-allowed-tools: ["Bash", "AskUserQuestion"]
+allowed-tools: ["Bash", "Read", "AskUserQuestion"]
 ---
 
 # Create Issue
@@ -24,7 +24,19 @@ gh repo view --json owner,name --jq '"\(.owner.login)/\(.name)"'
 
 Store for the API call. If this fails, tell the user they need to be in a GitHub-connected repo.
 
-### 2. Parse User Input
+### 2. Detect Repo Type
+
+Read the `issue-workflow.local.md` state file from the project root. Parse the YAML frontmatter for `repo_type` (`personal` or `organization`).
+
+If the state file doesn't exist, detect on-the-fly:
+
+```bash
+gh api users/{OWNER} --jq '.type'
+```
+
+This returns `"User"` (personal) or `"Organization"`. Warn the user to run `/issue-workflow:setup` to persist this detection.
+
+### 3. Parse User Input
 
 If arguments were provided, extract:
 - Issue description/title
@@ -33,7 +45,7 @@ If arguments were provided, extract:
 
 If no arguments or insufficient detail, ask the user what needs to be done.
 
-### 3. Determine Issue Type
+### 4. Determine Issue Type
 
 | Type | When to Use |
 |------|-------------|
@@ -48,7 +60,7 @@ Infer from context if not explicitly stated:
 
 If ambiguous, ask the user.
 
-### 4. Craft Issue Title
+### 5. Craft Issue Title
 
 Follow the convention: `{Area}: {Clear, actionable description}`
 
@@ -64,7 +76,7 @@ The area should identify the affected part of the system (e.g., "Dashboard", "Au
 - "Improvements"
 - "Bug"
 
-### 5. Craft Issue Body
+### 6. Craft Issue Body
 
 Use this exact structure:
 
@@ -100,9 +112,11 @@ Use this exact structure:
 - Notes: omit entirely if nothing relevant
 - Right-size the issue — group related work with checklists rather than creating atomic issues
 
-### 6. Create Issue via API
+### 7. Create Issue via API
 
-Use the GitHub API to create the issue with the type set:
+The API call depends on repo type:
+
+**Organization repos** — use native issue types:
 
 ```bash
 gh api repos/{OWNER}/{REPO}/issues -X POST \
@@ -114,10 +128,24 @@ EOF
   -f type="Task|Bug|Feature"
 ```
 
-### 7. Report Result
+**Personal repos** — omit `type`, apply `type:*` label instead:
+
+```bash
+gh api repos/{OWNER}/{REPO}/issues -X POST \
+  -f title="Issue title" \
+  -f body="$(cat <<'EOF'
+Issue body here
+EOF
+)" \
+  -f 'labels[]=type:task'
+```
+
+Use the matching label: `type:task`, `type:bug`, or `type:feature`.
+
+### 8. Report Result
 
 Output:
 - Issue URL (construct from `https://github.com/{OWNER}/{REPO}/issues/{NUMBER}`)
 - Issue number
-- Assigned type
+- Assigned type (and whether it was set via native type or label)
 - Brief confirmation of what was created

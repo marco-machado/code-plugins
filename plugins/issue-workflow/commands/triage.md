@@ -1,7 +1,7 @@
 ---
 description: Review open GitHub issues — find stale/zombie/blocked items, categorize by health, and suggest triage actions
 argument-hint: "Optional: --interactive for one-by-one triage"
-allowed-tools: ["Bash", "AskUserQuestion"]
+allowed-tools: ["Bash", "Read", "AskUserQuestion"]
 ---
 
 # Triage Issues
@@ -22,13 +22,29 @@ $ARGUMENTS
 gh repo view --json owner,name --jq '"\(.owner.login)/\(.name)"'
 ```
 
-### 2. Determine Mode
+### 2. Detect Repo Type
+
+Read the `issue-workflow.local.md` state file from the project root. Parse the YAML frontmatter for `repo_type` (`personal` or `organization`).
+
+If the state file doesn't exist, detect on-the-fly:
+
+```bash
+gh api users/{OWNER} --jq '.type'
+```
+
+This returns `"User"` (personal) or `"Organization"`. Warn the user to run `/issue-workflow:setup` to persist this detection.
+
+### 3. Determine Mode
 
 Check if `$ARGUMENTS` contains `--interactive` or `-i`.
-- If yes → Interactive mode (Step 5)
-- If no → Summary mode (Step 3-4)
+- If yes → Interactive mode (Step 6)
+- If no → Summary mode (Step 4-5)
 
-### 3. Fetch All Open Issues (Summary Mode)
+### 4. Fetch All Open Issues (Summary Mode)
+
+The jq query depends on repo type:
+
+**Organization repos** — use native issue types:
 
 ```bash
 gh api repos/{OWNER}/{REPO}/issues \
@@ -43,7 +59,24 @@ gh api repos/{OWNER}/{REPO}/issues \
   }'
 ```
 
-### 4. Categorize & Present Report (Summary Mode)
+**Personal repos** — extract type from `type:*` labels:
+
+```bash
+gh api repos/{OWNER}/{REPO}/issues \
+  --paginate \
+  --jq '.[] | select(.pull_request == null) | {
+    number: .number,
+    title: .title,
+    type: (([.labels[].name | select(startswith("type:"))] | first // "none") | sub("^type:"; "")),
+    labels: [.labels[].name | select(startswith("type:") | not)],
+    updated_at: .updated_at,
+    created_at: .created_at
+  }'
+```
+
+Note: for personal repos, the `labels` array excludes `type:*` labels since those are reported in the `type` field.
+
+### 5. Categorize & Present Report (Summary Mode)
 
 Categorize each issue by health status using these rules:
 
@@ -83,7 +116,7 @@ After the report, offer to take bulk actions:
 - Remove `blocked` label from issues whose blockers are resolved
 - Comment on stale issues to reset the timer
 
-### 5. Interactive Triage Mode
+### 6. Interactive Triage Mode
 
 If `--interactive` was specified, go through issues one by one, starting with the most stale.
 
@@ -113,7 +146,7 @@ For each issue:
 
 4. After all issues are triaged, show a summary of actions taken.
 
-### 6. Triage Principles
+### 7. Triage Principles
 
 Apply these guiding questions when making recommendations:
 

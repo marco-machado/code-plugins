@@ -7,8 +7,8 @@ An opinionated Claude Code plugin for managing GitHub Issues through their full 
 Issues exist to track work, not to create work. This plugin codifies a lightweight workflow:
 
 - **Structured issues** with Problem/Approach/Acceptance Criteria/Tasks format
-- **Three issue types** (Task, Bug, Feature) instead of label sprawl
-- **Three labels only** (`blocked`, `stale`, `pinned`)
+- **Three issue types** (Task, Bug, Feature) — native on org repos, `type:*` labels on personal repos
+- **Three workflow labels** (`blocked`, `stale`, `pinned`) plus type labels on personal repos
 - **`issue/{N}-description` branch naming** for traceability
 - **Zombie detection** via automated stale workflow
 - **Right-sized issues** with checklists, not atomic sub-issues
@@ -47,8 +47,7 @@ Copy the plugin directory into your project or symlink it.
 
 - `gh` CLI installed and authenticated (`gh auth status`)
 - Git repository with a GitHub remote
-- For issue types: organization-level issue types configured (Task, Bug, Feature)
 
 ## First-Time Setup
 
-Run `/issue-workflow:setup` in your repo to verify configuration and create any missing labels, templates, or workflows.
+Run `/issue-workflow:setup` in your repo to verify configuration and create any missing labels, templates, or workflows. Setup automatically detects whether you're on a personal or org repo and configures the type mechanism accordingly (native Issue Types for orgs, `type:*` labels for personal repos).

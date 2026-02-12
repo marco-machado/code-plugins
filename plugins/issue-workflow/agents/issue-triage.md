@@ -45,7 +45,24 @@ You are an issue triage specialist. Your job is to analyze all open GitHub issue
    gh repo view --json owner,name --jq '"\(.owner.login)/\(.name)"'
    ```
 
-2. **Fetch all open issues** (excluding pull requests):
+2. **Detect repo type:**
+
+   Read the `issue-workflow.local.md` state file from the project root. Parse the YAML frontmatter for `repo_type` (`personal` or `organization`).
+
+   If the state file doesn't exist, detect on-the-fly:
+
+   ```bash
+   gh api users/{OWNER} --jq '.type'
+   ```
+
+   This returns `"User"` (personal) or `"Organization"`.
+
+3. **Fetch all open issues** (excluding pull requests):
+
+   The jq query depends on repo type:
+
+   **Organization repos** — use native issue types:
+
    ```bash
    gh api repos/{OWNER}/{REPO}/issues --paginate \
      --jq '.[] | select(.pull_request == null) | {
@@ -58,7 +75,23 @@ You are an issue triage specialist. Your job is to analyze all open GitHub issue
      }'
    ```
 
-3. **Categorize each issue:**
+   **Personal repos** — extract type from `type:*` labels:
+
+   ```bash
+   gh api repos/{OWNER}/{REPO}/issues --paginate \
+     --jq '.[] | select(.pull_request == null) | {
+       number: .number,
+       title: .title,
+       type: (([.labels[].name | select(startswith("type:"))] | first // "none") | sub("^type:"; "")),
+       labels: [.labels[].name | select(startswith("type:") | not)],
+       updated_at: .updated_at,
+       created_at: .created_at
+     }'
+   ```
+
+   Note: for personal repos, the `labels` array excludes `type:*` labels since those are reported in the `type` field.
+
+4. **Categorize each issue:**
 
    | Category | Criteria | Action |
    |----------|----------|--------|
@@ -68,14 +101,14 @@ You are an issue triage specialist. Your job is to analyze all open GitHub issue
    | Zombie | Updated 44+ days ago | Strong close candidate |
    | Blocked | Has `blocked` label | Check if blocker resolved |
 
-4. **Produce a report** with:
+5. **Produce a report** with:
    - Total open issues count
    - Breakdown by category
    - Table of issues needing attention (sorted by staleness)
    - Recommended action for each
    - List of healthy/active issues for reference
 
-5. **Apply triage principles:**
+6. **Apply triage principles:**
    - An issue untouched for 3+ months is not happening — recommend closing
    - An issue without a clear next step is a wish, not an issue — recommend rescoping
    - If `blocked` label exists but issue hasn't been commented on in 30+ days, the blocker may be stale too
