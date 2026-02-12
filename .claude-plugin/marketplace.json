@@ -12,7 +12,7 @@
   "plugins": [
     {
       "name": "issue-workflow",
-      "source": "./issue-workflow",
+      "source": "./plugins/issue-workflow",
       "description": "Opinionated GitHub Issues lifecycle management — create, implement, triage, close",
       "version": "0.1.0",
       "author": {
