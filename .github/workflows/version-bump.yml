@@ -1,0 +1,121 @@
+name: Auto Version Bump
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  version-bump:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Bump plugin versions
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+
+          if [[ "$COMMIT_MSG" == "chore: bump "* ]]; then
+            echo "Skipping: commit is a version bump"
+            exit 0
+          fi
+          if [[ "$COMMIT_MSG" == *"[skip-version]"* ]]; then
+            echo "Skipping: [skip-version] found in commit message"
+            exit 0
+          fi
+
+          CHANGED_PLUGINS=$(git diff --name-only "$BEFORE_SHA" HEAD -- 'plugins/' \
+            | cut -d'/' -f2 \
+            | sort -u)
+
+          if [[ -z "$CHANGED_PLUGINS" ]]; then
+            echo "No plugin files changed"
+            exit 0
+          fi
+
+          if [[ "$COMMIT_MSG" == feat:* || "$COMMIT_MSG" == feat\(* || "$COMMIT_MSG" == feat!:* ]]; then
+            BUMP="minor"
+          else
+            BUMP="patch"
+          fi
+
+          echo "Bump type: $BUMP"
+          echo "Changed plugins: $CHANGED_PLUGINS"
+
+          TMPFILE=$(mktemp)
+          trap 'rm -f "$TMPFILE"' EXIT
+
+          BUMPED_ANY=false
+          BUMP_SUMMARY=""
+          STAGED_FILES=()
+
+          for PLUGIN in $CHANGED_PLUGINS; do
+            PLUGIN_JSON="plugins/${PLUGIN}/.claude-plugin/plugin.json"
+            MARKETPLACE_JSON=".claude-plugin/marketplace.json"
+
+            if [[ ! -f "$PLUGIN_JSON" ]]; then
+              echo "No plugin.json for $PLUGIN, skipping"
+              continue
+            fi
+
+            PLUGIN_CHANGES=$(git diff --name-only "$BEFORE_SHA" HEAD -- "plugins/${PLUGIN}/" \
+              | grep -v '\.claude-plugin/plugin\.json$' || true)
+            if [[ -z "$PLUGIN_CHANGES" ]]; then
+              echo "Only plugin.json changed for $PLUGIN, skipping"
+              continue
+            fi
+
+            CURRENT=$(jq -r '.version' "$PLUGIN_JSON")
+            if [[ ! "$CURRENT" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::Invalid version '$CURRENT' in $PLUGIN_JSON (expected MAJOR.MINOR.PATCH)"
+              exit 1
+            fi
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+
+            if [[ "$BUMP" == "minor" ]]; then
+              MINOR=$((MINOR + 1))
+              PATCH=0
+            else
+              PATCH=$((PATCH + 1))
+            fi
+
+            NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+            echo "Bumping $PLUGIN: $CURRENT → $NEW_VERSION"
+
+            jq --arg v "$NEW_VERSION" '.version = $v' "$PLUGIN_JSON" > "$TMPFILE" \
+              && mv "$TMPFILE" "$PLUGIN_JSON"
+
+            if ! jq -e --arg name "$PLUGIN" '.plugins[] | select(.name == $name)' "$MARKETPLACE_JSON" > /dev/null 2>&1; then
+              echo "::error::Plugin '$PLUGIN' not found in $MARKETPLACE_JSON -- versions would be out of sync"
+              exit 1
+            fi
+
+            jq --arg name "$PLUGIN" --arg v "$NEW_VERSION" \
+              '(.plugins[] | select(.name == $name)).version = $v' \
+              "$MARKETPLACE_JSON" > "$TMPFILE" \
+              && mv "$TMPFILE" "$MARKETPLACE_JSON"
+
+            BUMPED_ANY=true
+            BUMP_SUMMARY="${BUMP_SUMMARY:+$BUMP_SUMMARY, }${PLUGIN} to ${NEW_VERSION}"
+            STAGED_FILES+=("$PLUGIN_JSON" "$MARKETPLACE_JSON")
+          done
+
+          if [[ "$BUMPED_ANY" != "true" ]]; then
+            echo "No plugins needed a version bump"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "${STAGED_FILES[@]}"
+          git commit -m "chore: bump ${BUMP_SUMMARY}"
+          git push
