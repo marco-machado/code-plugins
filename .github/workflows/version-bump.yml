@@ -10,18 +10,20 @@ permissions:
 jobs:
   version-bump:
     runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
 
       - name: Bump plugin versions
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
         run: |
           set -euo pipefail
 
           COMMIT_MSG=$(git log -1 --pretty=%B)
 
-          # Skip conditions
           if [[ "$COMMIT_MSG" == "chore: bump "* ]]; then
             echo "Skipping: commit is a version bump"
             exit 0
@@ -31,8 +33,7 @@ jobs:
             exit 0
           fi
 
-          # Find changed plugins by diffing against parent commit
-          CHANGED_PLUGINS=$(git diff --name-only HEAD~1 HEAD -- 'plugins/' \
+          CHANGED_PLUGINS=$(git diff --name-only "$BEFORE_SHA" HEAD -- 'plugins/' \
             | cut -d'/' -f2 \
             | sort -u)
 
@@ -41,8 +42,7 @@ jobs:
             exit 0
           fi
 
-          # Determine bump type from commit message
-          if [[ "$COMMIT_MSG" == feat:* || "$COMMIT_MSG" == feat\(*  ]]; then
+          if [[ "$COMMIT_MSG" == feat:* || "$COMMIT_MSG" == feat\(* || "$COMMIT_MSG" == feat!:* ]]; then
             BUMP="minor"
           else
             BUMP="patch"
@@ -51,8 +51,12 @@ jobs:
           echo "Bump type: $BUMP"
           echo "Changed plugins: $CHANGED_PLUGINS"
 
+          TMPFILE=$(mktemp)
+          trap 'rm -f "$TMPFILE"' EXIT
+
           BUMPED_ANY=false
           BUMP_SUMMARY=""
+          STAGED_FILES=()
 
           for PLUGIN in $CHANGED_PLUGINS; do
             PLUGIN_JSON="plugins/${PLUGIN}/.claude-plugin/plugin.json"
@@ -63,8 +67,7 @@ jobs:
               continue
             fi
 
-            # Check if only plugin.json itself changed (no real code change)
-            PLUGIN_CHANGES=$(git diff --name-only HEAD~1 HEAD -- "plugins/${PLUGIN}/" \
+            PLUGIN_CHANGES=$(git diff --name-only "$BEFORE_SHA" HEAD -- "plugins/${PLUGIN}/" \
               | grep -v '\.claude-plugin/plugin\.json$' || true)
             if [[ -z "$PLUGIN_CHANGES" ]]; then
               echo "Only plugin.json changed for $PLUGIN, skipping"
@@ -72,6 +75,10 @@ jobs:
             fi
 
             CURRENT=$(jq -r '.version' "$PLUGIN_JSON")
+            if [[ ! "$CURRENT" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::Invalid version '$CURRENT' in $PLUGIN_JSON (expected MAJOR.MINOR.PATCH)"
+              exit 1
+            fi
             IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
 
             if [[ "$BUMP" == "minor" ]]; then
@@ -84,18 +91,22 @@ jobs:
             NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
             echo "Bumping $PLUGIN: $CURRENT → $NEW_VERSION"
 
-            # Update plugin.json
-            jq --arg v "$NEW_VERSION" '.version = $v' "$PLUGIN_JSON" > tmp.json \
-              && mv tmp.json "$PLUGIN_JSON"
+            jq --arg v "$NEW_VERSION" '.version = $v' "$PLUGIN_JSON" > "$TMPFILE" \
+              && mv "$TMPFILE" "$PLUGIN_JSON"
 
-            # Update marketplace.json
+            if ! jq -e --arg name "$PLUGIN" '.plugins[] | select(.name == $name)' "$MARKETPLACE_JSON" > /dev/null 2>&1; then
+              echo "::error::Plugin '$PLUGIN' not found in $MARKETPLACE_JSON -- versions would be out of sync"
+              exit 1
+            fi
+
             jq --arg name "$PLUGIN" --arg v "$NEW_VERSION" \
               '(.plugins[] | select(.name == $name)).version = $v' \
-              "$MARKETPLACE_JSON" > tmp.json \
-              && mv tmp.json "$MARKETPLACE_JSON"
+              "$MARKETPLACE_JSON" > "$TMPFILE" \
+              && mv "$TMPFILE" "$MARKETPLACE_JSON"
 
             BUMPED_ANY=true
             BUMP_SUMMARY="${BUMP_SUMMARY:+$BUMP_SUMMARY, }${PLUGIN} to ${NEW_VERSION}"
+            STAGED_FILES+=("$PLUGIN_JSON" "$MARKETPLACE_JSON")
           done
 
           if [[ "$BUMPED_ANY" != "true" ]]; then
@@ -105,6 +116,6 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
+          git add "${STAGED_FILES[@]}"
           git commit -m "chore: bump ${BUMP_SUMMARY}"
           git push
