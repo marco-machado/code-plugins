@@ -1,0 +1,110 @@
+name: Auto Version Bump
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  version-bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Bump plugin versions
+        run: |
+          set -euo pipefail
+
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+
+          # Skip conditions
+          if [[ "$COMMIT_MSG" == "chore: bump "* ]]; then
+            echo "Skipping: commit is a version bump"
+            exit 0
+          fi
+          if [[ "$COMMIT_MSG" == *"[skip-version]"* ]]; then
+            echo "Skipping: [skip-version] found in commit message"
+            exit 0
+          fi
+
+          # Find changed plugins by diffing against parent commit
+          CHANGED_PLUGINS=$(git diff --name-only HEAD~1 HEAD -- 'plugins/' \
+            | cut -d'/' -f2 \
+            | sort -u)
+
+          if [[ -z "$CHANGED_PLUGINS" ]]; then
+            echo "No plugin files changed"
+            exit 0
+          fi
+
+          # Determine bump type from commit message
+          if [[ "$COMMIT_MSG" == feat:* || "$COMMIT_MSG" == feat\(*  ]]; then
+            BUMP="minor"
+          else
+            BUMP="patch"
+          fi
+
+          echo "Bump type: $BUMP"
+          echo "Changed plugins: $CHANGED_PLUGINS"
+
+          BUMPED_ANY=false
+          BUMP_SUMMARY=""
+
+          for PLUGIN in $CHANGED_PLUGINS; do
+            PLUGIN_JSON="plugins/${PLUGIN}/.claude-plugin/plugin.json"
+            MARKETPLACE_JSON=".claude-plugin/marketplace.json"
+
+            if [[ ! -f "$PLUGIN_JSON" ]]; then
+              echo "No plugin.json for $PLUGIN, skipping"
+              continue
+            fi
+
+            # Check if only plugin.json itself changed (no real code change)
+            PLUGIN_CHANGES=$(git diff --name-only HEAD~1 HEAD -- "plugins/${PLUGIN}/" \
+              | grep -v '\.claude-plugin/plugin\.json$' || true)
+            if [[ -z "$PLUGIN_CHANGES" ]]; then
+              echo "Only plugin.json changed for $PLUGIN, skipping"
+              continue
+            fi
+
+            CURRENT=$(jq -r '.version' "$PLUGIN_JSON")
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+
+            if [[ "$BUMP" == "minor" ]]; then
+              MINOR=$((MINOR + 1))
+              PATCH=0
+            else
+              PATCH=$((PATCH + 1))
+            fi
+
+            NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+            echo "Bumping $PLUGIN: $CURRENT → $NEW_VERSION"
+
+            # Update plugin.json
+            jq --arg v "$NEW_VERSION" '.version = $v' "$PLUGIN_JSON" > tmp.json \
+              && mv tmp.json "$PLUGIN_JSON"
+
+            # Update marketplace.json
+            jq --arg name "$PLUGIN" --arg v "$NEW_VERSION" \
+              '(.plugins[] | select(.name == $name)).version = $v' \
+              "$MARKETPLACE_JSON" > tmp.json \
+              && mv tmp.json "$MARKETPLACE_JSON"
+
+            BUMPED_ANY=true
+            BUMP_SUMMARY="${BUMP_SUMMARY:+$BUMP_SUMMARY, }${PLUGIN} to ${NEW_VERSION}"
+          done
+
+          if [[ "$BUMPED_ANY" != "true" ]]; then
+            echo "No plugins needed a version bump"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: bump ${BUMP_SUMMARY}"
+          git push
