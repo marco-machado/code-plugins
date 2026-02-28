@@ -40,6 +40,7 @@ code-plugins/
 
 - **Conventional Commits** — `feat:`, `fix:`, `refactor:`, `docs:`, `chore:`, etc. Scope is optional (e.g., `feat(issue-workflow): add close command`)
 - **Conventional Branches** — `feat/`, `fix/`, `refactor/`, `docs/`, `chore/`, etc. (e.g., `feat/ui-critic-plugin`, `fix/label-fallback`)
+- **PR descriptions** — must include a full test plan with step-by-step verification steps
 
 ## Key Conventions
 
