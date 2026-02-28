@@ -22,6 +22,19 @@
       "license": "MIT",
       "keywords": ["github", "issues", "workflow", "triage", "branching"],
       "category": "development"
+    },
+    {
+      "name": "ui-critic",
+      "source": "./plugins/ui-critic",
+      "description": "Analyze UI/web screenshots and provide actionable design improvement suggestions",
+      "version": "0.1.0",
+      "author": {
+        "name": "Marco Machado",
+        "email": "marco.machado@gmail.com"
+      },
+      "license": "MIT",
+      "keywords": ["ui", "design", "review", "screenshot", "accessibility", "ux"],
+      "category": "design"
     }
   ]
 }
