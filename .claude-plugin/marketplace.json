@@ -14,13 +14,19 @@
       "name": "issue-workflow",
       "source": "./plugins/issue-workflow",
       "description": "Opinionated GitHub Issues lifecycle management — create, implement, triage, close",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "author": {
         "name": "Marco Machado",
         "email": "marco.machado@gmail.com"
       },
       "license": "MIT",
-      "keywords": ["github", "issues", "workflow", "triage", "branching"],
+      "keywords": [
+        "github",
+        "issues",
+        "workflow",
+        "triage",
+        "branching"
+      ],
       "category": "development"
     }
   ]
