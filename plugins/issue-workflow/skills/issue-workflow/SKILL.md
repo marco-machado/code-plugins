@@ -1,23 +1,17 @@
 ---
 name: issue-workflow
 description: |
-  This skill should be used when the conversation involves work planning, issue management, issue creation, branch naming conventions, backlog health, issue triage, or GitHub Issues workflow. It provides the opinionated methodology for managing GitHub Issues as a solo developer or small team.
-
-  Triggers on topics like: "create an issue", "what branch name", "triage my backlog", "close this issue", "issue template", "stale issues", "zombie issues", "blocked issues", "how should I structure this issue", "issue workflow", "track this work", "what labels should I use", "how to close an issue", "PR closing keywords".
+  This project uses a custom GitHub Issues workflow with specific conventions that differ from defaults — you must consult this skill rather than giving generic advice. Contains: required issue body template (Problem/Approach/Acceptance Criteria/Tasks/Notes), mandatory branch naming format (issue/{N}-{desc}), label rules (only blocked/stale/pinned allowed), issue sizing with checklists, zombie detection (30-day stale, 44-day auto-close), and triage decision framework. Trigger whenever the conversation touches: creating/structuring issues, branch naming, backlog organization, triage, stale/zombie issues, closing workflow, PR closing keywords, label strategy, issue sizing, blocked issues, or work tracking — even without the word "issue".
 version: 0.1.0
 ---
 
 # GitHub Issues Workflow Methodology
 
-An opinionated, lightweight issue tracking methodology for solo developers and small teams that maximizes value while minimizing overhead.
+An opinionated, lightweight issue tracking methodology for solo developers and small teams. Issues exist to track work, not to create work — if maintaining your issue tracker takes more than 5 minutes per week, you're doing it wrong.
 
-## Core Philosophy
-
-Issues exist to track work, not to create work. If maintaining your issue tracker takes more than 5 minutes per week, you're doing it wrong.
+**Personal repos note:** Native Issue Types and some features are org-only on GitHub. On personal repos, this workflow uses `type:task`, `type:bug`, and `type:feature` labels as fallback. The `/issue-workflow:setup` command detects this automatically.
 
 ## Issue Types
-
-GitHub Issue Types classify work at the organization level:
 
 | Type | When to Use | Example |
 |------|-------------|---------|
@@ -25,22 +19,16 @@ GitHub Issue Types classify work at the organization level:
 | **Bug** | Something is broken | "Race condition in auto-completion" |
 | **Feature** | New functionality | "Allow unlimited paused stints" |
 
-Types are set at issue creation via the GitHub API (the `create` command handles this automatically).
-
-**Personal repos:** Native Issue Types are an org-only GitHub feature. On personal repos, the workflow uses `type:task`, `type:bug`, and `type:feature` labels as a fallback. The `/setup` command detects this automatically and creates the labels.
-
 ## Issue Sizing
 
-Issues represent a logical chunk of work, not atomic tasks. Group related work with checklists:
+Issues represent a logical chunk of work, not atomic tasks. Group related work with checklists.
 
 **Too granular:** 3 separate issues for 3 empty states
 **Right-sized:** 1 issue "Dashboard polish — empty states & error handling" with a checklist
 
-Benefits: fewer issues, related work stays together, one PR closes everything.
+Don't create issues for: sub-tasks (use checklists), work you'll do in the next hour, future phases months away, or things already completed.
 
 ## Issue Structure
-
-Every issue follows this body format:
 
 ```markdown
 ## Problem
@@ -67,7 +55,7 @@ Every issue follows this body format:
 
 ## Labels
 
-Three workflow labels — required on all repos:
+Three workflow labels only:
 
 | Label | Purpose |
 |-------|---------|
@@ -75,9 +63,7 @@ Three workflow labels — required on all repos:
 | `stale` | Auto-applied by zombie detection |
 | `pinned` | Exempt from stale detection |
 
-**Personal repos** also use three type labels (`type:task`, `type:bug`, `type:feature`) since native Issue Types are unavailable.
-
-Do NOT use labels for categorization (that's what issue types are for on org repos), priority (you already know what's urgent), or assignment (you're solo).
+Don't use labels for categorization, priority, or assignment — that's overhead that doesn't pay for itself at small scale.
 
 ## Branch Naming
 
@@ -85,59 +71,34 @@ Do NOT use labels for categorization (that's what issue types are for on org rep
 issue/{NUMBER}-{short-description}
 ```
 
-Rules: always include issue number, lowercase, hyphens, keep it short. The `issue/` prefix is universal — the issue itself classifies work as Bug/Feature/Task.
+Always include issue number, lowercase, hyphens, keep it short. The `issue/` prefix is universal — the issue itself classifies work type.
 
-Examples:
-- `issue/42-dashboard-empty-states`
-- `issue/15-auth-session-expiry`
+Examples: `issue/42-dashboard-empty-states`, `issue/15-auth-session-expiry`
 
 ## Closing Issues
 
-Two methods:
 1. **Via PR:** Include `Closes #XX` or `Fixes #XX` in PR description (auto-closes on merge)
 2. **Manual:** `gh issue close {N} --comment "reason" --reason completed`
 
-Before closing, check:
-- All checklist items completed or explicitly deferred
+Before closing, verify all checklist items are completed or explicitly deferred.
 
 ## Zombie Issue Management
 
-Issues inactive 30+ days are zombies. An automated stale workflow handles this:
-- **Day 30:** Issue labeled `stale`, comment posted
-- **Day 44:** Issue auto-closed if no activity
+Issues inactive 30+ days are zombies. The automated stale workflow handles this:
+- **Day 30:** Labeled `stale`, comment posted
+- **Day 44:** Auto-closed if no activity
 
 Issues with `blocked` or `pinned` labels are exempt.
 
-**Triage questions:**
-1. "Would I mass-close this if I had 100 issues?" → Close it
-2. "If this disappeared, would I recreate it?" → No? Close it
-3. "Can I describe the next concrete step?" → No? Rescope or close
+**Triage questions** — if any answer is "yes", close the issue:
+1. Would I mass-close this if I had 100 issues?
+2. If this disappeared, would I NOT recreate it?
+3. Can I not describe the next concrete step?
 
-## Anti-Patterns to Avoid
+## Anti-Patterns
 
-- **Issue inflation** — creating issues "just in case" (close if untouched for 3 months)
-- **Label obsession** — if you have more than 3 workflow labels (6 on personal repos counting type labels), delete the extras
-- **Roadmap duplication** — maintaining status in both roadmap doc AND issues
-- **Future hoarding** — creating issues for work months away (put it in the roadmap doc instead)
+- **Issue inflation** — creating issues "just in case" (close if untouched 3 months)
+- **Label obsession** — more than 3 workflow labels means you're overcomplicating it
+- **Roadmap duplication** — status in both roadmap doc AND issues
+- **Future hoarding** — issues for work months away (put it in a roadmap doc instead)
 - **Zombie tolerance** — letting old issues sit open indefinitely
-
-## When NOT to Create Issues
-
-- Sub-tasks (use checklists in a parent issue)
-- Work you'll do in the next hour
-- Future phases you won't touch for months
-- Things already completed
-
-## Plugin Commands
-
-This plugin provides commands for the full issue lifecycle:
-
-| Command | Purpose |
-|---------|---------|
-| `/issue-workflow:setup` | Check repo config (labels, types, templates) and fix gaps |
-| `/issue-workflow:create` | Create a well-structured issue with proper type and body |
-| `/issue-workflow:implement` | Fetch issue, analyze codebase, create branch, plan implementation |
-| `/issue-workflow:triage` | Review open issues, find stale/zombie/blocked, suggest actions |
-| `/issue-workflow:close` | Close issue with workflow checks (checklist completion) |
-
-The **issue-triage** agent can also be triggered proactively to analyze backlog health.
