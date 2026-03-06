@@ -7,6 +7,7 @@ Claude Code plugins by Marco Machado.
 | Plugin | Description |
 |--------|-------------|
 | [issue-workflow](plugins/issue-workflow/) | Opinionated GitHub Issues lifecycle management — create, implement, triage, close |
+| [ui-critic](plugins/ui-critic/) | Analyze UI/web screenshots and provide actionable design improvement suggestions |
 
 ## Installation
 

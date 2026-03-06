@@ -1,0 +1,9 @@
+{
+  "name": "ui-critic",
+  "version": "0.1.0",
+  "description": "Analyze UI/web screenshots and provide actionable design improvement suggestions",
+  "author": {
+    "name": "Marco Machado",
+    "email": "marco.machado@gmail.com"
+  }
+}
