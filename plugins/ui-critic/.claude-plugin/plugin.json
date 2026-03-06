@@ -1,6 +1,6 @@
 {
   "name": "ui-critic",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Analyze UI/web screenshots and provide actionable design improvement suggestions",
   "author": {
     "name": "Marco Machado",
