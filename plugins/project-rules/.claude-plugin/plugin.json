@@ -1,0 +1,10 @@
+{
+  "name": "project-rules",
+  "version": "0.1.0",
+  "description": "Extract implicit codebase conventions into explicit project rule files under .claude/rules/",
+  "license": "MIT",
+  "author": {
+    "name": "Marco Machado",
+    "email": "marco.machado@gmail.com"
+  }
+}
